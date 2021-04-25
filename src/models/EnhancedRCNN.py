@@ -23,9 +23,9 @@ class EnhancedRCNN(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(config.embedding, freeze=False)
         self.gru = nn.GRU(config.embed_dim, config.hidden_size, batch_first=True, bidirectional=True)
         self.BN = nn.BatchNorm1d(config.embed_dim)
-        self.nin = NIN(config.embed_dim, self.embeds_dim)
-        self.fc_sub = FCSubtract(config.embed_dim * 16 + (config.max_seq_len - 1) * 6, config.linear_size)
-        self.fc_mul = FCMultiply(config.embed_dim * 16 + (config.max_seq_len - 1) * 6, config.linear_size)
+        self.nin = NIN(config.embed_dim, config.embed_dim)
+        self.fc_sub = FCSubtract(config.embed_dim * 8 + (config.max_seq_len - 1) * 6, config.linear_size)
+        self.fc_mul = FCMultiply(config.embed_dim * 8 + (config.max_seq_len - 1) * 6, config.linear_size)
         self.dense = nn.Sequential(
             nn.Linear(config.linear_size*2, 2),
             nn.Softmax(dim=-1)
@@ -47,8 +47,8 @@ class EnhancedRCNN(nn.Module):
     def forward(self, input):
         sent1, sent2 = input['seq1'], input['seq2']
         mask1, mask2 = sent1.eq(0), sent2.eq(0)
-        a = self.BN(self.embeds(sent1).transpose(1, 2).contiguous()).transpose(1, 2)
-        b = self.BN(self.embeds(sent2).transpose(1, 2).contiguous()).transpose(1, 2)
+        a = self.BN(self.embedding(sent1).transpose(1, 2).contiguous()).transpose(1, 2)
+        b = self.BN(self.embedding(sent2).transpose(1, 2).contiguous()).transpose(1, 2)
 
         # RNN encoder: BiGRU
         o1, _ = self.gru(a)
@@ -77,7 +77,7 @@ class EnhancedRCNN(nn.Module):
         res = torch.cat((res_sub, res_mul), dim=1)
         similarity = self.dense(res)
 
-        return similarity
+        return similarity, similarity
 
 
 class NIN(nn.Module):

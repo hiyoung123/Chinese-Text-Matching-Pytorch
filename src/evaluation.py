@@ -27,6 +27,7 @@ from utils.log import Log
 
 MODEL_CLASSES = {
     'ESIM': (None, None, None, ESIM, EmbeddingDataset),
+    'EnhancedRCNN': (None, None, None, EnhancedRCNN, EmbeddingDataset),
 }
 
 
